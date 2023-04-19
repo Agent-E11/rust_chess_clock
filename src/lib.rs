@@ -1,6 +1,13 @@
 use std::{io::{stdout, Write}, error::Error};
 use crossterm::event::{self, Event, KeyCode};
 
+pub struct ProgramState {
+    controls: Controls,
+    running: bool,
+    active_player: ActivePlayer,
+    menu_active: bool,
+}
+
 pub struct Controls {
     toggle_menu: KeyCode,
     toggle_start: KeyCode,
@@ -8,6 +15,21 @@ pub struct Controls {
     reset_time: KeyCode,
     switch_time: KeyCode,
     quit: KeyCode,
+}
+
+#[derive(PartialEq, Debug)]
+pub enum ActivePlayer {
+    Player1,
+    Player2,
+}
+
+impl ActivePlayer {
+    pub fn switch_player(&mut self) {
+        *self = match self {
+            ActivePlayer::Player1 => ActivePlayer::Player2,
+            ActivePlayer::Player2 => ActivePlayer::Player1,
+        }
+    }
 }
 
 pub fn run() -> Result<(), Box<dyn Error>> {
@@ -23,6 +45,13 @@ pub fn run() -> Result<(), Box<dyn Error>> {
         quit: KeyCode::Char('q'),
     };
 
+    let mut program_state = ProgramState {
+        controls: default_controls,
+        running: false,
+        active_player: ActivePlayer::Player1,
+        menu_active: false,
+    };
+
     loop {
         // Wait for a key event
         match event::read().unwrap() {
@@ -32,12 +61,12 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                 if key.kind != crossterm::event::KeyEventKind::Press { continue; }
 
                 match key.code {
-                    qu if qu == default_controls.quit => break,
-                    tm if tm == default_controls.toggle_menu => print!("Toggle menu\n\r"),
-                    ts if ts == default_controls.toggle_start => print!("Toggle start\n\r"),
-                    rt if rt == default_controls.reset_time => print!("Reset time\n\r"),
-                    st if st == default_controls.switch_time => print!("Switch time\n\r"),
-                    ts if ts == default_controls.toggle_settings => print!("Toggle settings\n\r"),
+                    c if c == program_state.controls.quit => break,
+                    c if c == program_state.controls.toggle_menu => print!("Toggle menu\n\r"),
+                    c if c == program_state.controls.toggle_start => print!("Toggle start\n\r"),
+                    c if c == program_state.controls.reset_time => print!("Reset time\n\r"),
+                    c if c == program_state.controls.switch_time => print!("Switch time\n\r"),
+                    c if c == program_state.controls.toggle_settings => print!("Toggle settings\n\r"),
                     k => print!("{k:?}\n\r"),
                 }
             }
@@ -50,4 +79,18 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     crossterm::terminal::disable_raw_mode().expect("oh no");
     
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn switch_active_player() {
+        let mut active_player = ActivePlayer::Player1;
+        active_player.switch_player();
+        assert_eq!(ActivePlayer::Player2, active_player);
+        active_player.switch_player();
+        assert_eq!(ActivePlayer::Player1, active_player);
+    }
 }
