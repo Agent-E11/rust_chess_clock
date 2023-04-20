@@ -1,6 +1,7 @@
 use std::{io::{stdout, Write}, error::Error};
 use crossterm::event::{self, Event, KeyCode};
 
+// Models the current state of the program
 pub struct ProgramState {
     controls: Controls,
     running: bool,
@@ -8,6 +9,7 @@ pub struct ProgramState {
     menu_active: bool,
 }
 
+// Contains all the possible controls and their `KeyCode`s
 pub struct Controls {
     toggle_menu: KeyCode,
     toggle_start: KeyCode,
@@ -17,6 +19,7 @@ pub struct Controls {
     quit: KeyCode,
 }
 
+// Represents the current active player
 #[derive(PartialEq, Debug)]
 pub enum ActivePlayer {
     Player1,
@@ -24,6 +27,7 @@ pub enum ActivePlayer {
 }
 
 impl ActivePlayer {
+    // Toggle between `Player1` and `Player2`
     pub fn switch_player(&mut self) {
         *self = match self {
             ActivePlayer::Player1 => ActivePlayer::Player2,
@@ -32,10 +36,12 @@ impl ActivePlayer {
     }
 }
 
+// Handles the program process
 pub fn run() -> Result<(), Box<dyn Error>> {
     crossterm::terminal::enable_raw_mode().expect("oh no");
     let mut stdout = stdout();
 
+    // Declare the default controls
     let default_controls = Controls {
         toggle_menu: KeyCode::Esc,
         toggle_start: KeyCode::Char('s'),
@@ -45,6 +51,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
         quit: KeyCode::Char('q'),
     };
 
+    // Declare the default program state
     let mut program_state = ProgramState {
         controls: default_controls,
         running: false,
@@ -55,11 +62,11 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     loop {
         // Wait for a key event
         match event::read().unwrap() {
-            
             Event::Key(key) => {
                 // If it's not a key *press*, skip it
                 if key.kind != crossterm::event::KeyEventKind::Press { continue; }
 
+                // If the key is one of the keys in `program_state.controls`, perform the associated action
                 match key.code {
                     c if c == program_state.controls.quit => break,
                     c if c == program_state.controls.toggle_menu => print!("Toggle menu\n\r"),
@@ -81,10 +88,12 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+// ---------- Tests ----------
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    // Test the `switch_player()` method associated with the `ActivePlayer` enum
     #[test]
     fn switch_active_player() {
         let mut active_player = ActivePlayer::Player1;
