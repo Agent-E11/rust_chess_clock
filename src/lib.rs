@@ -1,5 +1,5 @@
-use std::{io::{stdout, Write}, error::Error};
-use crossterm::event::{self, Event, KeyCode};
+use std::{io::{stdout, Write}, error::Error, time::Duration};
+use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 
 // Models the current state of the program
 pub struct ProgramState {
@@ -7,6 +7,8 @@ pub struct ProgramState {
     running: bool,
     active_player: ActivePlayer,
     menu_active: bool,
+    player_1_time: Duration,
+    player_2_time: Duration,
 }
 
 // Contains all the possible controls and their `KeyCode`s
@@ -57,6 +59,8 @@ pub fn run() -> Result<(), Box<dyn Error>> {
         running: false,
         active_player: ActivePlayer::Player1,
         menu_active: false,
+        player_1_time: Duration::from_secs(60),
+        player_2_time: Duration::from_secs(60),
     };
 
     loop {
@@ -64,7 +68,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
         match event::read().unwrap() {
             Event::Key(key) => {
                 // If it's not a key *press*, skip it
-                if key.kind != crossterm::event::KeyEventKind::Press { continue; }
+                if key.kind != KeyEventKind::Press { continue; }
 
                 // If the key is one of the keys in `program_state.controls`, perform the associated action
                 match key.code {
